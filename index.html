@@ -15,104 +15,88 @@
       font-family: Arial, sans-serif;
       color: #fff;
     }
-    .container {
-      width: 420px;
-      max-width: 95%;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    .rosco {
-      position: relative;
-      width: 320px;
-      height: 320px;
-      margin: 20px auto;
-      border-radius: 50%;
-    }
-    .letter {
-      position: absolute;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #3949ab;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-    }
+    .container { width: 420px; max-width: 95%; text-align: center; }
+    h1 { margin-bottom: 5px; }
+    .info { margin-bottom: 10px; }
+    .rosco { position: relative; width: 320px; height: 320px; margin: 20px auto; border-radius: 50%; }
+    .letter { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: #3949ab; display: flex; justify-content: center; align-items: center; font-weight: bold; }
     .letter.active { background: #ffeb3b; color: #000; }
     .letter.ok { background: #2e7d32; }
     .letter.ko { background: #c62828; }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      font-size: 18px;
-      border-radius: 6px;
-      border: none;
-      margin-top: 10px;
-    }
-    button {
-      margin-top: 10px;
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #ff9800;
-      cursor: pointer;
-    }
-    .question {
-      min-height: 60px;
-      margin-top: 10px;
-    }
+    input { width: 100%; padding: 12px; font-size: 18px; border-radius: 6px; border: none; margin-top: 10px; }
+    button { margin-top: 10px; width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 6px; background: #ff9800; cursor: pointer; }
+    .question { min-height: 60px; margin-top: 10px; }
+    .final { font-size: 32px; margin-top: 20px; animation: pop 1s ease-out; }
+    .win { color: #ffd700; animation: confetti 2s infinite; }
+    .lose { color: #ff5252; animation: shake 0.6s; }
+    @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-8px); } 100% { transform: translateX(0); } }
+    @keyframes confetti { 0% { text-shadow: 0 0 5px #fff; } 50% { text-shadow: 0 0 20px gold; } 100% { text-shadow: 0 0 5px #fff; } }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container" id="game">
     <h1>🟡 Rosco Pasapalabra</h1>
+    <div class="info">
+      ⏱️ Tiempo: <span id="time">150</span>s · ✅ Aciertos: <span id="hits">0</span>
+    </div>
     <div class="question" id="question"></div>
-
     <div class="rosco" id="rosco"></div>
-
     <input id="answer" placeholder="Escribe tu respuesta o PASAPALABRA" />
     <button onclick="submitAnswer()">Responder</button>
   </div>
 
+  <div class="container" id="end" style="display:none">
+    <div class="final" id="finalMessage"></div>
+    <p id="finalDetail"></p>
+    <audio id="winSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+    <audio id="loseSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+  </div>
+    <p id="finalDetail"></p>
+  </div>
+
   <script>
-    const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
     const questions = [
       { letter: "A", question: "Con la A: Sentimiento fuerte de cariño hacia otra persona", answer: "amor" },
       { letter: "B", question: "Con la B: Alianza que se intercambia en una boda", answer: "boda" },
       { letter: "C", question: "Con la C: Promesa formal entre dos personas que se van a casar", answer: "compromiso" },
-      { letter: "D", question: "Con la D: Palabra que define una fecha especial", answer: "día" },
+      { letter: "D", question: "Con la D: Palabra que define una fecha especial", answer: "dia" },
       { letter: "E", question: "Con la E: Acto de dar el anillo", answer: "entrega" },
       { letter: "F", question: "Con la F: Celebración con música, baile y comida", answer: "fiesta" },
       { letter: "G", question: "Con la G: Texto que suele llevar un anillo", answer: "grabado" },
       { letter: "H", question: "Con la H: Lugar donde viven juntos los recién casados", answer: "hogar" },
-      { letter: "I", question: "Con la I: Sentimiento al pensar en el futuro juntos", answer: "ilusión" },
+      { letter: "I", question: "Con la I: Sentimiento al pensar en el futuro juntos", answer: "ilusion" },
       { letter: "J", question: "Con la J: Celebración divertida antes de la boda", answer: "juerga" }
     ];
-
-    let index = 0;
 
     const rosco = document.getElementById("rosco");
     const questionEl = document.getElementById("question");
     const input = document.getElementById("answer");
+    const timeEl = document.getElementById("time");
+    const hitsEl = document.getElementById("hits");
 
-    letters.forEach((l, i) => {
+    let index = 0;
+    let hits = 0;
+    let time = 150;
+    let finished = false;
+
+    questions.forEach((q, i) => {
       const el = document.createElement("div");
       el.className = "letter";
-      el.textContent = l;
-      const angle = (2 * Math.PI / letters.length) * i;
+      el.textContent = q.letter;
+      const angle = (2 * Math.PI / questions.length) * i;
       const r = 140;
       el.style.left = 140 + r * Math.cos(angle) + "px";
       el.style.top = 140 + r * Math.sin(angle) + "px";
       rosco.appendChild(el);
     });
 
+    function normalize(text) {
+      return text.normalize("NFD").replace(/[̀-ͯ]/g, "");
+    }
+
     function showQuestion() {
+      if (finished) return;
       document.querySelectorAll('.letter').forEach(l => l.classList.remove('active'));
       document.querySelectorAll('.letter')[index].classList.add('active');
       questionEl.textContent = questions[index].question;
@@ -121,21 +105,55 @@
     }
 
     function submitAnswer() {
-      const value = input.value.trim().toLowerCase();
+      if (finished) return;
+      const value = normalize(input.value.trim().toLowerCase());
       const current = questions[index];
       const letterEl = document.querySelectorAll('.letter')[index];
 
-      if (value === "pasapalabra") {
-        index = (index + 1) % questions.length;
-      } else if (value === current.answer.toLowerCase()) {
-        letterEl.classList.add('ok');
-        index = (index + 1) % questions.length;
-      } else {
-        letterEl.classList.add('ko');
-        index = (index + 1) % questions.length;
+      if (value !== "pasapalabra") {
+        if (value === current.answer) {
+          letterEl.classList.add('ok');
+          hits++;
+          hitsEl.textContent = hits;
+        } else {
+          letterEl.classList.add('ko');
+        }
       }
-      showQuestion();
+      index++;
+      if (index >= questions.length) finishGame();
+      else showQuestion();
     }
+
+    function finishGame() {
+      finished = true;
+      clearInterval(timer);
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('end').style.display = 'block';
+
+      const total = questions.length;
+      const percent = hits / total;
+      const finalMessage = document.getElementById('finalMessage');
+      const finalDetail = document.getElementById('finalDetail');
+
+      if (percent >= 0.9) {
+        finalMessage.textContent = "💍 FELIZ BODA 💍";
+        finalMessage.classList.add('win');
+        finalDetail.innerHTML = "Contraseña de la cuenta:<br><strong>ContraseñaSaidi</strong>";
+        document.getElementById('winSound').play();
+      } else {
+        finalMessage.textContent = "💔 FELIZ DIVORCIO";
+        finalMessage.classList.add('lose');
+        finalDetail.textContent = "No se ha alcanzado el 90% de aciertos.";
+        document.getElementById('loseSound').play();
+      }
+    }
+
+    const timer = setInterval(() => {
+      if (finished) return;
+      time--;
+      timeEl.textContent = time;
+      if (time <= 0) finishGame();
+    }, 1000);
 
     showQuestion();
   </script>
