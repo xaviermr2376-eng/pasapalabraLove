@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rosco Pasapalabra</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle, #1a237e, #000);
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 420px;
+      max-width: 95%;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .rosco {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 20px auto;
+      border-radius: 50%;
+    }
+    .letter {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #3949ab;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+    .letter.active { background: #ffeb3b; color: #000; }
+    .letter.ok { background: #2e7d32; }
+    .letter.ko { background: #c62828; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #ff9800;
+      cursor: pointer;
+    }
+    .question {
+      min-height: 60px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🟡 Rosco Pasapalabra</h1>
+    <div class="question" id="question"></div>
+
+    <div class="rosco" id="rosco"></div>
+
+    <input id="answer" placeholder="Escribe tu respuesta o PASAPALABRA" />
+    <button onclick="submitAnswer()">Responder</button>
+  </div>
+
+  <script>
+    const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+    const questions = [
+      { letter: "A", question: "Con la A: Sentimiento fuerte de cariño hacia otra persona", answer: "amor" },
+      { letter: "B", question: "Con la B: Alianza que se intercambia en una boda", answer: "boda" },
+      { letter: "C", question: "Con la C: Promesa formal entre dos personas que se van a casar", answer: "compromiso" },
+      { letter: "D", question: "Con la D: Palabra que define una fecha especial", answer: "día" },
+      { letter: "E", question: "Con la E: Acto de dar el anillo", answer: "entrega" },
+      { letter: "F", question: "Con la F: Celebración con música, baile y comida", answer: "fiesta" },
+      { letter: "G", question: "Con la G: Texto que suele llevar un anillo", answer: "grabado" },
+      { letter: "H", question: "Con la H: Lugar donde viven juntos los recién casados", answer: "hogar" },
+      { letter: "I", question: "Con la I: Sentimiento al pensar en el futuro juntos", answer: "ilusión" },
+      { letter: "J", question: "Con la J: Celebración divertida antes de la boda", answer: "juerga" }
+    ];
+
+    let index = 0;
+
+    const rosco = document.getElementById("rosco");
+    const questionEl = document.getElementById("question");
+    const input = document.getElementById("answer");
+
+    letters.forEach((l, i) => {
+      const el = document.createElement("div");
+      el.className = "letter";
+      el.textContent = l;
+      const angle = (2 * Math.PI / letters.length) * i;
+      const r = 140;
+      el.style.left = 140 + r * Math.cos(angle) + "px";
+      el.style.top = 140 + r * Math.sin(angle) + "px";
+      rosco.appendChild(el);
+    });
+
+    function showQuestion() {
+      document.querySelectorAll('.letter').forEach(l => l.classList.remove('active'));
+      document.querySelectorAll('.letter')[index].classList.add('active');
+      questionEl.textContent = questions[index].question;
+      input.value = "";
+      input.focus();
+    }
+
+    function submitAnswer() {
+      const value = input.value.trim().toLowerCase();
+      const current = questions[index];
+      const letterEl = document.querySelectorAll('.letter')[index];
+
+      if (value === "pasapalabra") {
+        index = (index + 1) % questions.length;
+      } else if (value === current.answer.toLowerCase()) {
+        letterEl.classList.add('ok');
+        index = (index + 1) % questions.length;
+      } else {
+        letterEl.classList.add('ko');
+        index = (index + 1) % questions.length;
+      }
+      showQuestion();
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>
